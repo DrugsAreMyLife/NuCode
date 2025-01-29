@@ -12,14 +12,59 @@ export type GroupOptions = {
 // Group entry can be either a string or tuple with options
 export type GroupEntry = ToolGroup | readonly [ToolGroup, GroupOptions]
 
-// Mode configuration type
+// Mode configuration type with enhanced features
 export type ModeConfig = {
 	slug: string
 	name: string
 	roleDefinition: string
 	customInstructions?: string
-	groups: readonly GroupEntry[] // Now supports both simple strings and tuples with options
+	groups: readonly GroupEntry[]
+	// New fields for enhanced mode system
+	capabilities?: string[]          // Core competencies of the mode
+	triggers?: string[]             // Keywords that trigger mode selection
+	handoffTo?: string[]           // Modes that can receive handoffs
+	filePatterns?: string[]        // File patterns this mode can handle
 }
+
+// Mode context for tracking state
+export type ModeContext = {
+	currentTask: string
+	currentFiles: string[]
+	requiredCapabilities: Set<string>
+	completionStatus: Record<string, boolean>
+	handoffQueue: string[]
+}
+
+// Transition rule types
+export type TransitionRuleType = 'task' | 'file' | 'capability' | 'handoff'
+
+export type BaseTransitionRule = {
+	type: TransitionRuleType
+	targetMode: string
+	automatic: boolean
+}
+
+export type TaskRule = BaseTransitionRule & {
+	type: 'task'
+	condition: string[]  // Trigger keywords
+}
+
+export type FileRule = BaseTransitionRule & {
+	type: 'file'
+	condition: string[]  // File patterns
+}
+
+export type CapabilityRule = BaseTransitionRule & {
+	type: 'capability'
+	condition: Set<string>  // Required capabilities
+}
+
+export type HandoffRule = BaseTransitionRule & {
+	type: 'handoff'
+	condition: Record<string, boolean>  // Completion requirements
+}
+
+export type TransitionRule = TaskRule | FileRule | CapabilityRule | HandoffRule
 
 // Mode-specific prompts only
 export type PromptComponent = {
@@ -76,6 +121,14 @@ export const modes: readonly ModeConfig[] = [
 		roleDefinition:
 			"You are Roo, a highly skilled software engineer with extensive knowledge in many programming languages, frameworks, design patterns, and best practices.",
 		groups: ["read", "edit", "browser", "command", "mcp"],
+		capabilities: ["implement", "test", "debug", "refactor"],
+		triggers: ["code", "implement", "develop", "fix", "test"],
+		handoffTo: ["architect", "tester", "security"],
+		filePatterns: [
+			".*\\.(ts|js|jsx|tsx)$",
+			".*\\.(py|java|cpp|cs)$",
+			".*\\.(html|css|scss)$"
+		]
 	},
 	{
 		slug: "architect",
@@ -83,6 +136,10 @@ export const modes: readonly ModeConfig[] = [
 		roleDefinition:
 			"You are Roo, a software architecture expert specializing in analyzing codebases, identifying patterns, and providing high-level technical guidance. You excel at understanding complex systems, evaluating architectural decisions, and suggesting improvements. You can edit markdown documentation files to help document architectural decisions and patterns.",
 		groups: ["read", ["edit", { fileRegex: "\\.md$", description: "Markdown files only" }], "browser", "mcp"],
+		capabilities: ["design", "review", "document", "analyze"],
+		triggers: ["architecture", "design", "pattern", "structure"],
+		handoffTo: ["code", "security", "deployer"],
+		filePatterns: [".*\\.md$", "docs/.*", "architecture/.*"]
 	},
 	{
 		slug: "ask",
@@ -90,6 +147,10 @@ export const modes: readonly ModeConfig[] = [
 		roleDefinition:
 			"You are Roo, a knowledgeable technical assistant focused on answering questions and providing information about software development, technology, and related topics. You can analyze code, explain concepts, and access external resources. While you primarily maintain a read-only approach to the codebase, you can create and edit markdown files to better document and explain concepts. Make sure to answer the user's questions and don't rush to switch to implementing code.",
 		groups: ["read", ["edit", { fileRegex: "\\.md$", description: "Markdown files only" }], "browser", "mcp"],
+		capabilities: ["explain", "research", "document", "analyze"],
+		triggers: ["explain", "how", "what", "why", "help"],
+		handoffTo: ["code", "architect"],
+		filePatterns: [".*\\.md$", "docs/.*"]
 	},
 ] as const
 
@@ -159,7 +220,7 @@ export function isToolAllowedForMode(
 	modeSlug: string,
 	customModes: ModeConfig[],
 	toolRequirements?: Record<string, boolean>,
-	toolParams?: Record<string, any>, // All tool parameters
+	toolParams?: Record<string, any>,
 	experiments?: Record<string, boolean>,
 ): boolean {
 	// Always allow these tools
@@ -231,4 +292,58 @@ export function getRoleDefinition(modeSlug: string, customModes?: ModeConfig[]):
 		return ""
 	}
 	return mode.roleDefinition
+}
+
+// New helper functions for enhanced mode system
+
+// Check if a mode has a specific capability
+export function hasCapability(mode: ModeConfig, capability: string): boolean {
+	return mode.capabilities?.includes(capability) ?? false
+}
+
+// Check if a mode can handle a specific file pattern
+export function canHandleFile(mode: ModeConfig, filePath: string): boolean {
+	if (!mode.filePatterns?.length) {
+		return true // If no patterns specified, assume it can handle any file
+	}
+	return mode.filePatterns.some(pattern => doesFileMatchRegex(filePath, pattern))
+}
+
+// Check if a mode can receive handoffs from another mode
+export function canReceiveHandoff(fromMode: ModeConfig, toMode: ModeConfig): boolean {
+	return fromMode.handoffTo?.includes(toMode.slug) ?? false
+}
+
+// Check if a mode should be triggered based on task description
+export function shouldTriggerForTask(mode: ModeConfig, task: string): boolean {
+	if (!mode.triggers?.length) {
+		return false
+	}
+	return mode.triggers.some(trigger => task.toLowerCase().includes(trigger.toLowerCase()))
+}
+
+// Create a new context for a mode
+export function createModeContext(task: string, files: string[] = []): ModeContext {
+	return {
+		currentTask: task,
+		currentFiles: files,
+		requiredCapabilities: new Set<string>(),
+		completionStatus: {},
+		handoffQueue: []
+	}
+}
+
+// Update context with completion status
+export function updateCompletionStatus(
+	context: ModeContext,
+	modeSlug: string,
+	completed: boolean
+): ModeContext {
+	return {
+		...context,
+		completionStatus: {
+			...context.completionStatus,
+			[modeSlug]: completed
+		}
+	}
 }

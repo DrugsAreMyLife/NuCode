@@ -1,0 +1,20 @@
+{
+  "name": "nucode-update-checker",
+  "version": "1.0.0",
+  "description": "MCP server for managing NuCode updates",
+  "main": "dist/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@octokit/rest": "^19.0.0",
+    "semver": "^7.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "typescript": "^5.0.4"
+  }
+}
