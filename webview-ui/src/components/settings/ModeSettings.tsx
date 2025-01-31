@@ -2,6 +2,7 @@ import * as React from "react"
 import { memo } from "react"
 import { useExtensionState } from "../../context/ExtensionStateContext"
 import { Mode } from "../../../../src/shared/modes"
+import { getModeIcon } from "../common/ModeIndicator"
 import {
   ModeCard,
   ModeHeader,
@@ -22,25 +23,6 @@ interface ModeSettingsProps {
   onUpdateModel: (mode: string, model: string) => void
 }
 
-const getModeIcon = (mode: string): string => {
-  switch (mode) {
-    case 'code':
-      return 'code';
-    case 'architect':
-      return 'project';
-    case 'frontend':
-      return 'layout';
-    case 'backend':
-      return 'server';
-    case 'security':
-      return 'shield';
-    case 'devops':
-      return 'server-environment';
-    default:
-      return 'symbol-misc';
-  }
-}
-
 const ModeSettings: React.FC<ModeSettingsProps> = ({
   mode,
   description,
@@ -52,6 +34,17 @@ const ModeSettings: React.FC<ModeSettingsProps> = ({
     typeof customModePrompts[mode] === 'string' ? customModePrompts[mode] as string : ''
   )
   const [model, setModel] = React.useState(apiConfiguration?.id || "")
+  const [isTransitioning, setIsTransitioning] = React.useState(false)
+  const [prevMode, setPrevMode] = React.useState(mode)
+
+  React.useEffect(() => {
+    if (prevMode !== mode) {
+      setIsTransitioning(true)
+      const timer = setTimeout(() => setIsTransitioning(false), 500)
+      setPrevMode(mode)
+      return () => clearTimeout(timer)
+    }
+  }, [mode, prevMode])
 
   const handlePromptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPrompt(e.target.value)
@@ -70,7 +63,7 @@ const ModeSettings: React.FC<ModeSettingsProps> = ({
   }
 
   return (
-    <ModeCard $mode={mode}>
+    <ModeCard $mode={mode} $isTransitioning={isTransitioning}>
       <ModeHeader>
         <ModeIcon $mode={mode} className={`codicon codicon-${getModeIcon(mode)}`} />
         <ModeName>{mode.charAt(0).toUpperCase() + mode.slice(1)} Mode</ModeName>

@@ -1,10 +1,11 @@
 import * as React from "react"
-import { memo, useEffect, useMemo, useRef, useState } from "react"
+import { memo, useEffect, useMemo, useRef, useState, useCallback } from "react"
 import { useWindowSize } from "react-use"
 import { ClineMessage } from "../../../../src/shared/ExtensionMessage"
 import { useExtensionState } from "../../context/ExtensionStateContext"
 import { vscode } from "../../utils/vscode"
 import Thumbnails from "../common/Thumbnails"
+import ModeIndicator from "../common/ModeIndicator"
 import { mentionRegexGlobal } from "../../../../src/shared/context-mentions"
 import { formatLargeNumber } from "../../utils/format"
 import { normalizeApiConfiguration } from "../settings/ApiOptions"
@@ -27,27 +28,7 @@ import {
   MetricsValue,
   StyledExportButton,
   ExportButtonText,
-  ModeBadge,
 } from "./TaskHeaderStyles"
-
-const getModeIcon = (mode: string): string => {
-  switch (mode) {
-    case 'code':
-      return 'code';
-    case 'architect':
-      return 'project';
-    case 'frontend':
-      return 'layout';
-    case 'backend':
-      return 'server';
-    case 'security':
-      return 'shield';
-    case 'devops':
-      return 'server-environment';
-    default:
-      return 'symbol-misc';
-  }
-}
 
 interface TaskHeaderProps {
   task: ClineMessage
@@ -86,7 +67,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
   contextTokens,
   onClose,
 }) => {
-  const { apiConfiguration, mode } = useExtensionState()
+  const { apiConfiguration, mode: currentMode } = useExtensionState()
   const { selectedModelInfo } = useMemo<NormalizedApiConfig>(
     () => normalizeApiConfiguration(apiConfiguration),
     [apiConfiguration]
@@ -94,6 +75,17 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
   const [isTaskExpanded, setIsTaskExpanded] = useState<boolean>(true)
   const [isTextExpanded, setIsTextExpanded] = useState<boolean>(false)
   const [showSeeMore, setShowSeeMore] = useState<boolean>(false)
+  const [isTransitioning, setIsTransitioning] = useState<boolean>(false)
+  const [prevMode, setPrevMode] = useState(currentMode)
+
+  useEffect(() => {
+    if (prevMode !== currentMode) {
+      setIsTransitioning(true)
+      const timer = setTimeout(() => setIsTransitioning(false), 500)
+      setPrevMode(currentMode)
+      return () => clearTimeout(timer)
+    }
+  }, [currentMode, prevMode])
   const textContainerRef = useRef<HTMLDivElement>(null)
   const textRef = useRef<HTMLDivElement>(null)
   const contextWindow = selectedModelInfo?.contextWindow || 1
@@ -141,11 +133,11 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 
   return (
     <TaskContainer>
-      <TaskCard $mode={mode}>
+      <TaskCard $mode={currentMode}>
         <StyledTaskHeader>
           <TaskTitleContainer onClick={() => setIsTaskExpanded(!isTaskExpanded)}>
             <span className={`codicon codicon-chevron-${isTaskExpanded ? "down" : "right"}`}></span>
-            <TaskTitle $mode={mode}>
+            <TaskTitle $mode={currentMode}>
               <span style={{ fontWeight: "bold" }}>Task{!isTaskExpanded && ":"}</span>
               {!isTaskExpanded && (
                 <span style={{ marginLeft: 4 }}>{renderHighlightedText(task.text)}</span>
@@ -155,10 +147,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
           {!isTaskExpanded && (
             <>
               {isCostAvailable && <CostBadge>${totalCost?.toFixed(4)}</CostBadge>}
-              <ModeBadge $mode={mode}>
-                <span className={`codicon codicon-${getModeIcon(mode)}`} />
-                {mode}
-              </ModeBadge>
+              <ModeIndicator mode={currentMode} isTransitioning={isTransitioning} />
             </>
           )}
           <StyledExportButton appearance="icon" onClick={onClose}>
@@ -201,7 +190,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
             <MetricsContainer>
               <MetricsRow>
                 <MetricsGroup>
-                  <MetricsLabel $mode={mode}>Tokens:</MetricsLabel>
+                  <MetricsLabel $mode={currentMode}>Tokens:</MetricsLabel>
                   <MetricsValue>
                     <i className="codicon codicon-arrow-up" style={{ fontSize: "12px", fontWeight: "bold", marginBottom: "-2px" }} />
                     {formatLargeNumber(tokensIn || 0)}
@@ -216,7 +205,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 
               <MetricsRow>
                 <MetricsGroup>
-                  <MetricsLabel $mode={mode}>Context:</MetricsLabel>
+                  <MetricsLabel $mode={currentMode}>Context:</MetricsLabel>
                   <MetricsValue>
                     {contextTokens ? `${formatLargeNumber(contextTokens)} (${contextPercentage}%)` : "-"}
                   </MetricsValue>
@@ -226,7 +215,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
               {shouldShowPromptCacheInfo && (cacheReads !== undefined || cacheWrites !== undefined) && (
                 <MetricsRow>
                   <MetricsGroup>
-                    <MetricsLabel $mode={mode}>Cache:</MetricsLabel>
+                    <MetricsLabel $mode={currentMode}>Cache:</MetricsLabel>
                     <MetricsValue>
                       <i className="codicon codicon-database" style={{ fontSize: "12px", fontWeight: "bold", marginBottom: "-1px" }} />
                       +{formatLargeNumber(cacheWrites || 0)}
@@ -242,7 +231,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
               {isCostAvailable && (
                 <MetricsRow>
                   <MetricsGroup>
-                    <MetricsLabel $mode={mode}>API Cost:</MetricsLabel>
+                    <MetricsLabel $mode={currentMode}>API Cost:</MetricsLabel>
                     <span>${totalCost?.toFixed(4)}</span>
                   </MetricsGroup>
                   <ExportButton />

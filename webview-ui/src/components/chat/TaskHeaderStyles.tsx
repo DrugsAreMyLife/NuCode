@@ -92,47 +92,6 @@ export const CostBadge = styled.div`
   flex-shrink: 0;
 `;
 
-export const ModeBadge = styled.div<{ $mode: string }>`
-  margin-left: 10px;
-  background-color: ${props => {
-    switch (props.$mode) {
-      case 'code':
-        return 'var(--roo-primary)';
-      case 'architect':
-        return 'color-mix(in srgb, var(--roo-primary) 80%, var(--background))';
-      case 'frontend':
-        return 'color-mix(in srgb, var(--roo-primary) 60%, var(--background))';
-      case 'backend':
-        return 'color-mix(in srgb, var(--roo-primary) 40%, var(--background))';
-      case 'security':
-        return 'color-mix(in srgb, var(--destructive) 60%, var(--background))';
-      case 'devops':
-        return 'color-mix(in srgb, var(--roo-primary) 20%, var(--background))';
-      default:
-        return 'var(--muted)';
-    }
-  }};
-  color: var(--primary-foreground);
-  padding: 2px 6px;
-  border-radius: 500px;
-  font-size: 11px;
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-  transition: background-color 0.2s ease;
-
-  .codicon {
-    font-size: 12px;
-    margin-bottom: -1px;
-  }
-
-  &:hover {
-    filter: brightness(1.1);
-  }
-`;
-
 export const TaskContent = styled.div<{ isExpanded: boolean }>`
   margin-top: -2px;
   font-size: var(--vscode-font-size);
