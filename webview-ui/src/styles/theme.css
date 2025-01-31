@@ -1,0 +1,120 @@
+:root {
+  /* Original Roo-Code Brand Colors */
+  --roo-primary: #C8B6DC;
+  --roo-primary-light: color-mix(in srgb, var(--roo-primary) 70%, white);
+  --roo-primary-dark: color-mix(in srgb, var(--roo-primary) 70%, black);
+  
+  /* Hybrid Theme System - Combines Roo branding with VSCode integration */
+  
+  /* Base Colors - Use VSCode for background but Roo for accents */
+  --background: var(--vscode-editor-background);
+  --foreground: var(--vscode-editor-foreground);
+  
+  /* Component Colors */
+  --card: var(--vscode-editor-background);
+  --card-foreground: var(--vscode-editor-foreground);
+  --popover: var(--vscode-menu-background, var(--vscode-editor-background));
+  --popover-foreground: var(--vscode-menu-foreground, var(--vscode-editor-foreground));
+  
+  /* Button Colors - Use Roo primary for main actions */
+  --primary: var(--roo-primary);
+  --primary-foreground: var(--vscode-button-foreground);
+  --primary-hover: var(--roo-primary-light);
+  --primary-active: var(--roo-primary-dark);
+  
+  /* Secondary Actions - Keep VSCode style for consistency */
+  --secondary: var(--vscode-button-secondaryBackground);
+  --secondary-foreground: var(--vscode-button-secondaryForeground);
+  
+  /* Accent Colors - Use Roo primary for highlights */
+  --accent: var(--roo-primary);
+  --accent-foreground: var(--vscode-button-foreground);
+  
+  /* State Colors */
+  --muted: var(--vscode-disabledForeground);
+  --muted-foreground: var(--vscode-descriptionForeground);
+  --destructive: var(--vscode-errorForeground);
+  --destructive-foreground: var(--vscode-editor-background);
+  
+  /* UI Elements */
+  --border: var(--vscode-widget-border);
+  --input: var(--vscode-input-background);
+  --ring: var(--roo-primary);
+  --radius: 0.5rem;
+  
+  /* Chat UI Specific */
+  --chat-bubble-assistant: color-mix(in srgb, var(--roo-primary) 15%, var(--background));
+  --chat-bubble-user: color-mix(in srgb, var(--roo-primary) 5%, var(--background));
+  --chat-bubble-border: color-mix(in srgb, var(--roo-primary) 30%, transparent);
+}
+
+/* Button Styles */
+vscode-button::part(control) {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+vscode-button::part(control):hover {
+  background-color: var(--primary-hover);
+}
+
+vscode-button::part(control):active {
+  background-color: var(--primary-active);
+}
+
+/* Input Focus States */
+textarea:focus {
+  outline: 1.5px solid var(--ring);
+}
+
+/* Scrollbar Styling */
+.scrollable::-webkit-scrollbar-thumb {
+  background-color: var(--roo-primary);
+  opacity: 0.5;
+}
+
+.scrollable::-webkit-scrollbar-thumb:hover {
+  background-color: var(--roo-primary-light);
+}
+
+.scrollable::-webkit-scrollbar-thumb:active {
+  background-color: var(--roo-primary-dark);
+}
+
+/* Chat Message Styling */
+.assistant-message {
+  background-color: var(--chat-bubble-assistant);
+  border: 1px solid var(--chat-bubble-border);
+}
+
+.user-message {
+  background-color: var(--chat-bubble-user);
+  border: 1px solid var(--chat-bubble-border);
+}
+
+/* Dropdown Menu Styling */
+.dropdown-container label {
+  color: var(--foreground);
+}
+
+vscode-dropdown::part(listbox) {
+  border-color: var(--roo-primary);
+}
+
+/* Input Icon Buttons */
+.input-icon-button {
+  color: var(--roo-primary);
+  opacity: 0.65;
+}
+
+.input-icon-button:hover {
+  opacity: 1;
+}
+
+/* Context Mentions */
+.mention-context-textarea-highlight,
+.mention-context-highlight,
+.mention-context-highlight-with-shadow {
+  background-color: color-mix(in srgb, var(--roo-primary) 30%, transparent);
+  box-shadow: 0 0 0 0.5px color-mix(in srgb, var(--roo-primary) 30%, transparent);
+}

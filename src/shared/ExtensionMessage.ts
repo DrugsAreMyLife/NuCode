@@ -67,6 +67,17 @@ export interface ExtensionMessage {
 	mode?: Mode
 	customMode?: ModeConfig
 	slug?: string
+	values?: {
+		oldName?: string
+		newName?: string
+		mode?: string
+		prompt?: string
+		model?: string
+		fallback?: string
+		threshold?: number
+		autoSwitchSensitivity?: number
+		triggers?: string[]
+	}
 }
 
 export interface ApiConfigMeta {
@@ -108,11 +119,18 @@ export interface ExtensionState {
 	mcpEnabled: boolean
 	mode: Mode
 	modeApiConfigs?: Record<Mode, string>
+	modeFallbackConfigs?: Record<Mode, string>
+	modeThresholds?: Record<Mode, number>
 	enhancementApiConfigId?: string
 	experiments: Record<ExperimentId, boolean> // Map of experiment IDs to their enabled state
 	autoApprovalEnabled?: boolean
 	customModes: ModeConfig[]
 	toolRequirements?: Record<string, boolean> // Map of tool names to their requirements (e.g. {"apply_diff": true} if diffEnabled)
+	autoSwitchSensitivity?: number // Sensitivity threshold for auto-switching modes (0-1)
+	contextAnalysis?: Record<string, boolean> // Map of context analysis features to their enabled state
+	contextThresholds?: Record<string, number> // Map of context analysis features to their confidence thresholds
+	performanceSettings?: Record<string, boolean> // Map of performance features to their enabled state
+	resourceLimits?: Record<string, number> // Map of performance features to their resource limits
 }
 
 export interface ClineMessage {
